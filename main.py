@@ -5,7 +5,7 @@ import math
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, CAR1_COLOR, CAR2_COLOR, CAR_WIDTH, CAR_HEIGHT
 from track.track import Track
 from car.car import Car
-
+from ai.heuristic_agent import HeuristicAgent
 
 def main():
     
@@ -23,6 +23,9 @@ def main():
     car1 = Car(center_x - 50, center_y, angle=0.0, color=CAR1_COLOR)
     car2 = Car(center_x + 50, center_y, angle=math.pi, color=CAR2_COLOR)  # facing left
 
+    # Agents
+    agent1 = HeuristicAgent(lookahead_depth=3)
+    agent2 = HeuristicAgent(lookahead_depth=3)
 
     # Actual game loop
     running = True
@@ -31,30 +34,23 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        # === TEMPORARY: Keyboard control for testing ===
-        keys = pygame.key.get_pressed()
-
-        # Car 1: WASD
-        if keys[pygame.K_a]: car1.turn_left()
-        if keys[pygame.K_d]: car1.turn_right()
-        # if keys[pygame.K_w]: car1.accelerate()
-        # if keys[pygame.K_s]: car1.brake()
-        # else: car1.maintain()
-
-        # Car 2: Arrow keys
-        if keys[pygame.K_LEFT]: car2.turn_left()
-        if keys[pygame.K_RIGHT]: car2.turn_right()
-        # if keys[pygame.K_UP]: car2.accelerate()
-        # if keys[pygame.K_DOWN]: car2.brake()
-        # else: car2.maintain()
-
-        # Get track info
+        # Track details 
         _, curvature1, _ = car1.get_track_info(track)
         _, curvature2, _ = car2.get_track_info(track)
 
-        # AI controls speed
+        # Speed controlling
         car1.ai_control_speed(curvature1)
         car2.ai_control_speed(curvature2)
+
+        # Steering controlling
+        action1 = agent1.decide_action(car1, track)
+        action2 = agent2.decide_action(car2, track)
+
+        if action1 == "left": car1.turn_left()
+        elif action1 == "right": car1.turn_right()
+
+        if action2 == "left": car2.turn_left()
+        elif action2 == "right": car2.turn_right()
 
         # Update physics
         car1.update()
