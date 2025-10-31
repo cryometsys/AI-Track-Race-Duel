@@ -1,0 +1,15 @@
+# Screen information
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 800
+FPS = 60
+
+# Track details
+TRACK_COLOR = (50, 50, 50)
+TRACK_BORDER_COLOR = (200, 200, 200)
+TRACK_WIDTH = 200 
+
+# Car details
+CAR_WIDTH = 20
+CAR_HEIGHT = 12
+CAR1_COLOR = (255, 0, 0)
+CAR2_COLOR = (0, 0, 255)
