@@ -2,6 +2,7 @@
 import math
 import pygame
 from config import CAR_WIDTH, CAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT
+from utils.geometry import closest_point_on_track, compute_curvature, distance
 
 class Car:
     def __init__(self, x, y, angle=0.0, color=(255, 255, 255)):
@@ -45,6 +46,23 @@ class Car:
 
         # Optional: wrap around screen or clamp (we'll add track bounds later)
         # For now, allow moving off-screen during testing
+
+    def get_track_info(self, track):
+        """Returns (progress_index, curvature, distance_to_center)"""
+        car_pos = (self.x, self.y)
+        closest_point, idx = closest_point_on_track(car_pos, track.centerline)
+        
+        # Distance to centerline (for heuristic)
+        dist_to_center = distance(car_pos, closest_point)
+        
+        # Estimate curvature using next few points
+        n = len(track.centerline)
+        p0 = track.centerline[(idx - 1) % n]
+        p1 = track.centerline[idx]
+        p2 = track.centerline[(idx + 1) % n]
+        curvature = compute_curvature(p0, p1, p2)
+        
+        return idx, curvature, dist_to_center
 
     def draw(self, surface):
         """Draw the car as a rotated rectangle."""
