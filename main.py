@@ -1,7 +1,11 @@
 import pygame
 import sys
+import math
+
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, CAR1_COLOR, CAR2_COLOR, CAR_WIDTH, CAR_HEIGHT
 from track.track import Track
+from car.car import Car
+
 
 def main():
     
@@ -14,8 +18,9 @@ def main():
     track = Track()
 
     # Car positions
-    car1_pos = (SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
-    car2_pos = (SCREEN_WIDTH // 2 + 50, SCREEN_HEIGHT // 2)
+    center_x, center_y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
+    car1 = Car(center_x - 50, center_y, angle=0.0, color=CAR1_COLOR)
+    car2 = Car(center_x + 50, center_y, angle=math.pi, color=CAR2_COLOR)  # facing left
 
 
     # Actual game loop
@@ -25,12 +30,28 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+        # === TEMPORARY: Keyboard control for testing ===
+        keys = pygame.key.get_pressed()
+        # Car 1: WASD
+        if keys[pygame.K_a]: car1.turn_left()
+        if keys[pygame.K_d]: car1.turn_right()
+        if keys[pygame.K_w]: car1.accelerate()
+        if keys[pygame.K_s]: car1.brake()
+        # Car 2: Arrow keys
+        if keys[pygame.K_LEFT]: car2.turn_left()
+        if keys[pygame.K_RIGHT]: car2.turn_right()
+        if keys[pygame.K_UP]: car2.accelerate()
+        if keys[pygame.K_DOWN]: car2.brake()
+
+        # Update physics
+        car1.update()
+        car2.update()
+
+        # Draw
         screen.fill((30, 100, 30))
         track.draw(screen)
-
-        # Drawing cars
-        pygame.draw.rect(screen, CAR1_COLOR, (*car1_pos, CAR_WIDTH, CAR_HEIGHT))
-        pygame.draw.rect(screen, CAR2_COLOR, (*car2_pos, CAR_WIDTH, CAR_HEIGHT))
+        car1.draw(screen)
+        car2.draw(screen)
 
         pygame.display.flip()
         clock.tick(FPS)

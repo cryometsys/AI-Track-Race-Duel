@@ -11,10 +11,10 @@ class Track:
         self.outer_radius = self.inner_radius + TRACK_WIDTH
 
     def draw(self, surface):
-        # Background
+        # Track
         pygame.draw.circle(surface, TRACK_COLOR, (self.center_x, self.center_y), self.outer_radius)
 
-        # Inner circle
+        # Track border
         pygame.draw.circle(surface, (30, 100, 30), (self.center_x, self.center_y), self.inner_radius)
         
         # Border
