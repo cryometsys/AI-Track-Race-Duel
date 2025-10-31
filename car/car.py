@@ -1,8 +1,10 @@
 # car/car.py
 import math
 import pygame
+
 from config import CAR_WIDTH, CAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT
 from utils.geometry import closest_point_on_track, compute_curvature, distance
+from ai.fuzzy import get_acceleration_action
 
 class Car:
     def __init__(self, x, y, angle=0.0, color=(255, 255, 255)):
@@ -63,6 +65,18 @@ class Car:
         curvature = compute_curvature(p0, p1, p2)
         
         return idx, curvature, dist_to_center
+
+    def ai_control_speed(self, curvature: float):
+        """Use fuzzy logic to set acceleration based on speed and curvature."""
+        acc_command = get_acceleration_action(self.speed, curvature)
+        
+        # Convert continuous command to discrete actions
+        if acc_command > 0.3:
+            self.accelerate()
+        elif acc_command < -0.3:
+            self.brake()
+        else:
+            self.maintain()  # includes mild friction
 
     def draw(self, surface):
         """Draw the car as a rotated rectangle."""

@@ -3,7 +3,7 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT, TRACK_COLOR, TRACK_BORDER_COLOR,
 import math
 
 class Track:
-    def __init__(self):
+    def __init__(self, seed = None):
         self.center_x = SCREEN_WIDTH // 2
         self.center_y = SCREEN_HEIGHT // 2
 

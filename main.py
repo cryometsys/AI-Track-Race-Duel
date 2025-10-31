@@ -33,23 +33,33 @@ def main():
 
         # === TEMPORARY: Keyboard control for testing ===
         keys = pygame.key.get_pressed()
+
         # Car 1: WASD
         if keys[pygame.K_a]: car1.turn_left()
         if keys[pygame.K_d]: car1.turn_right()
-        if keys[pygame.K_w]: car1.accelerate()
-        if keys[pygame.K_s]: car1.brake()
-        else: car1.maintain()
+        # if keys[pygame.K_w]: car1.accelerate()
+        # if keys[pygame.K_s]: car1.brake()
+        # else: car1.maintain()
 
         # Car 2: Arrow keys
         if keys[pygame.K_LEFT]: car2.turn_left()
         if keys[pygame.K_RIGHT]: car2.turn_right()
-        if keys[pygame.K_UP]: car2.accelerate()
-        if keys[pygame.K_DOWN]: car2.brake()
-        else: car2.maintain()
-        
+        # if keys[pygame.K_UP]: car2.accelerate()
+        # if keys[pygame.K_DOWN]: car2.brake()
+        # else: car2.maintain()
+
+        # Get track info
+        _, curvature1, _ = car1.get_track_info(track)
+        _, curvature2, _ = car2.get_track_info(track)
+
+        # AI controls speed
+        car1.ai_control_speed(curvature1)
+        car2.ai_control_speed(curvature2)
+
         # Update physics
         car1.update()
         car2.update()
+
 
         # Curvature, speed display
         # idx1, curve1, dist1 = car1.get_track_info(track)
