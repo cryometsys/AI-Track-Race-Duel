@@ -7,14 +7,14 @@ from ai.fuzzy import get_acceleration_action
 
 class Car:
     def __init__(self, x, y, angle=0.0, color=(255, 255, 255)):
-        # x and y refer to the position of the car; angle refers to the orientation of the car(in radian)
+        # x and y => position of the car; angle => orientation of the car(in radian)
         self.x = x
         self.y = y
         self.angle = angle
         
         # The acceleration, brake and turn motions of the car
         self.speed = 0.0
-        self.max_speed = 8.0
+        self.max_speed = 15.0
         self.acceleration_rate = 0.3
         self.brake_rate = 0.4
         self.turn_rate = 0.15
@@ -50,9 +50,6 @@ class Car:
         self.x += self.speed * math.cos(self.angle)
         self.y += self.speed * math.sin(self.angle)
 
-        # Optional: wrap around screen or clamp (we'll add track bounds later)
-        # For now, allow moving off-screen during testing
-
     def get_track_info(self, track):
         """Returns (progress_index, curvature, distance_to_center)"""
         car_pos = (self.x, self.y)
@@ -71,7 +68,7 @@ class Car:
         return idx, curvature, dist_to_center
 
     def ai_control_speed(self, curvature: float):
-        """Use fuzzy logic to set acceleration based on speed and curvature."""
+        """Fuzzy logic to set acceleration."""
         acc_command = get_acceleration_action(self.speed, curvature)
         
         # Convert continuous command to discrete actions
@@ -80,7 +77,7 @@ class Car:
         elif acc_command < -0.3:
             self.brake()
         else:
-            self.maintain()  # includes mild friction
+            self.maintain()
 
     def update_lap_progress(self, track):
         if self.lap_complete or self.lap_count >= 5:
@@ -89,8 +86,7 @@ class Car:
         car_pos = (self.x, self.y)
         _, nearest_idx = closest_point_on_track(car_pos, track.centerline)
         
-        # Detect if we crossed the start/finish line (index 0)
-        # by checking if we went from high index → low index
+        # Detect finish line crossing by checking if high index -> low index
         if self.last_closest_index > len(track.centerline) * 0.9 and nearest_idx < 10:
             self.lap_count += 1
             print(f"Car completed lap {self.lap_count}")

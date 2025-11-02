@@ -5,17 +5,17 @@ from car.car import Car
 from utils.geometry import get_future_heading
 
 class HeuristicAgent:
-    def __init__(self, lookahead_depth = 3, progress_weight=1.0, centering_weight=0.1, off_track_penalty=1000):
+    def __init__(self, lookahead_depth = 3, progress_weight = 1.0, centering_weight = 0.1, off_track_penalty = 1000):
         self.lookahead_depth = lookahead_depth
         self.actions = ["left", "right", "straight"]
 
         # Heuristic weights
-        self.progress_weight = progress_weight
-        self.centering_weight = centering_weight
-        self.off_track_penalty = off_track_penalty
+        self.progress_weight = progress_weight # Forward progress weight; high value => aggressive driving, low value => cautious driving
+        self.centering_weight = centering_weight # Weight for staying near center; high value => stay close to edge, low value => cut/drift to increase progress
+        self.off_track_penalty = off_track_penalty # Hard constraint to stay in lane
 
     def decide_action(self, car, track):
-        # Return the best steering action based on lookahead + heuristic.
+        # Return best action based on lookahead and heuristic
         best_action = "straight" # Default action
         best_score = -float('inf') # Smallest value
 
@@ -44,6 +44,7 @@ class HeuristicAgent:
         clone.acceleration_rate = car.acceleration_rate
         clone.brake_rate = car.brake_rate
         clone.turn_rate = car.turn_rate
+        
         return clone
 
     def _apply_action(self, car, action):
@@ -67,10 +68,11 @@ class HeuristicAgent:
         if dist_to_center > track.width // 2:
             collision_penalty = -self.off_track_penalty
 
-        # === NEW: Heading alignment bonus ===
+        # Heading alignment bonus
         ideal_heading = get_future_heading(track.centerline, idx, look_ahead=10)
         heading_error = abs(math.atan2(math.sin(car.angle - ideal_heading), math.cos(car.angle - ideal_heading)))
         alignment_bonus = -0.5 * heading_error
 
         total_score = progress_score + centering_penalty + collision_penalty + alignment_bonus
+
         return total_score

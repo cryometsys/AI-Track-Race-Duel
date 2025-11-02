@@ -37,9 +37,6 @@ def compute_curvature(p0, p1, p2):
     cos_angle = dot / (mag1 * mag2)
     cos_angle = max(-1.0, min(1.0, cos_angle))
     angle = math.acos(cos_angle)  # in radians
-    
-    # Normalize: max curvature when angle = π (U-turn), min when 0 (straight)
-    # Map [0, π] → [0, 1]
     return angle / math.pi
 
 def get_track_heading(centerline, index):

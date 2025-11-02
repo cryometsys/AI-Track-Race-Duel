@@ -18,8 +18,7 @@ def main():
     clock = pygame.time.Clock()
 
     # Track setup
-    # Available tracks: oval, figure8, technical, simple_loop
-    track = Track(track_type='')
+    track = Track()
 
     # Car initialization
     start_index = 0
@@ -41,8 +40,8 @@ def main():
     # Agent1 -> Cautious AI: values safety over speed
     agent1 = HeuristicAgent(
         lookahead_depth=3,
-        progress_weight=1.0,
-        centering_weight=0.3,      # Strongly penalizes drifting
+        progress_weight=0.5, # Speed and safety trade-off
+        centering_weight=0.3, # Strongly penalizes drifting
         off_track_penalty=1000
     )
 
@@ -54,7 +53,7 @@ def main():
         off_track_penalty=1000
     )
 
-    # Race completion
+    # Race completion flags
     race_finished = False
     winner = None
 
