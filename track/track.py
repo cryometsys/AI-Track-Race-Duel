@@ -1,107 +1,174 @@
+# track/track.py
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, TRACK_COLOR, TRACK_BORDER_COLOR, TRACK_WIDTH
+import random
+
 import math
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, TRACK_COLOR, TRACK_BORDER_COLOR, TRACK_WIDTH
+
 
 class Track:
-    def __init__(self, seed = None):
+    def __init__(self):
         self.center_x = SCREEN_WIDTH // 2
         self.center_y = SCREEN_HEIGHT // 2
-
-        self.radius = 250
         self.width = TRACK_WIDTH
         
-        # Centerline generation => list(x, y)
-        self.centerline = []
-        num_points = 100
-        for i in range(num_points):
-            angle = 2 * math.pi * i / num_points
-            x = self.center_x + self.radius * math.cos(angle)
-            y = self.center_y + self.radius * math.sin(angle)
-            self.centerline.append((x, y))
+        self.centerline = self._generate_oval()
 
-        self.centerline.append(self.centerline[0])
+        # Close loop (ensure first == last)
+        if self.centerline[0] != self.centerline[-1]:
+            self.centerline.append(self.centerline[0])
 
-        # Using every N point as checkpoints; 4 checkpoints per lap
-        self.checkpoint_indices = [0, 25, 50, 75]
+        # Place 4 evenly spaced checkpoints
+        total = len(self.centerline) - 1  # exclude duplicate last point
+        self.checkpoint_indices = [0, total // 4, total // 2, 3 * total // 4]
         self.checkpoints = [self.centerline[i] for i in self.checkpoint_indices]
 
+    # -------------------------------------------------
+    # Smooth oval with realistic racing curvature
+    # -------------------------------------------------
+    def _generate_oval(self):
+        random.seed()
+
+        points = []
+        cx, cy = self.center_x, self.center_y
+
+        # Track parameters
+        base_radius = 300
+        num_segments = 10  # total distinct track sections
+        segment_points = 30  # resolution per segment
+        angle = 0
+
+        # Define track segments (angle change per segment)
+        segments = []
+        for _ in range(num_segments):
+            seg_type = random.choice(["straight", "curve_smooth", "curve_tight"])
+            if seg_type == "straight":
+                angle_change = random.uniform(0.1, 0.3)  # gentle forward segment
+                radius = base_radius + random.uniform(-30, 30)
+            elif seg_type == "curve_smooth":
+                angle_change = random.uniform(0.4, 0.8)
+                radius = base_radius + random.uniform(-60, 60)
+            else:  # curve_tight
+                angle_change = random.uniform(1.0, 1.5)
+                radius = base_radius + random.uniform(-120, -60)
+            segments.append((seg_type, angle_change, radius))
+
+        # Generate points around
+        total_angle = 0
+        for seg_type, angle_change, radius in segments:
+            for i in range(segment_points):
+                t = i / segment_points
+                local_angle = angle + t * angle_change
+                x = cx + radius * math.cos(local_angle)
+                y = cy + radius * math.sin(local_angle)
+                points.append((x, y))
+            angle += angle_change
+            total_angle += angle_change
+
+        # Close loop smoothly by blending back to start
+        start_x, start_y = points[0]
+        end_x, end_y = points[-1]
+        for i in range(10):
+            t = i / 10
+            x = end_x + t * (start_x - end_x)
+            y = end_y + t * (start_y - end_y)
+            points.append((x, y))
+
+        # Normalize to center
+        avg_x = sum(p[0] for p in points) / len(points)
+        avg_y = sum(p[1] for p in points) / len(points)
+        points = [(x - avg_x + cx, y - avg_y + cy) for (x, y) in points]
+
+        return points
+
+    # # -------------------------------------------------
+    # # Figure-8 layout (overlapping cross section)
+    # # -------------------------------------------------
+    # def _generate_figure8(self):
+    #     cx, cy = self.center_x, self.center_y
+    #     r = 130
+    #     gap = 40  # center gap between loops
+    #     points = []
+
+    #     # Left loop (counterclockwise)
+    #     for i in range(100):
+    #         a = 2 * math.pi * i / 100
+    #         x = cx - gap - r * math.cos(a)
+    #         y = cy + r * math.sin(a)
+    #         points.append((x, y))
+
+    #     # Right loop (clockwise)
+    #     for i in range(100):
+    #         a = 2 * math.pi * i / 100
+    #         x = cx + gap + r * math.cos(a + math.pi)
+    #         y = cy + r * math.sin(a + math.pi)
+    #         points.append((x, y))
+
+    #     return points
+
+    # # -------------------------------------------------
+    # # Tight technical track with mix of 90° and curved turns
+    # # -------------------------------------------------
+    # def _generate_technical(self):
+    #     """Compact track with mixed tight corners and short straights."""
+    #     cx, cy = self.center_x, self.center_y
+    #     points = []
+
+    #     # Define control points of the track (like a blueprint)
+    #     control = [
+    #         (cx + 200, cy + 150),
+    #         (cx + 200, cy - 100),
+    #         (cx, cy - 200),
+    #         (cx - 200, cy - 100),
+    #         (cx - 200, cy + 50),
+    #         (cx, cy + 200),
+    #     ]
+
+    #     # Interpolate smoothly between control points
+    #     for i in range(len(control)):
+    #         x1, y1 = control[i]
+    #         x2, y2 = control[(i + 1) % len(control)]
+    #         for t in range(25):
+    #             u = t / 25
+    #             px = x1 + (x2 - x1) * u
+    #             py = y1 + (y2 - y1) * u
+    #             points.append((px, py))
+
+    #     return points
+
+    # # -------------------------------------------------
+    # # Simple loop circuit with a realistic chicane
+    # # -------------------------------------------------
+    # def _generate_simple_loop(self):
+    #     """Large loop with smooth turns and a fast chicane section."""
+    #     cx, cy = self.center_x, self.center_y
+    #     radius = 240
+    #     points = []
+
+    #     # Main circle (about 85%)
+    #     for i in range(85):
+    #         a = 2 * math.pi * i / 100
+    #         points.append((cx + radius * math.cos(a), cy + radius * math.sin(a)))
+
+    #     # Add a fast chicane (left-right-left kink)
+    #     start_x, start_y = points[-1]
+    #     chicane = [
+    #         (start_x - 60, start_y - 10),
+    #         (start_x - 90, start_y + 20),
+    #         (start_x - 50, start_y + 40),
+    #         (start_x, start_y + 20),
+    #     ]
+    #     points.extend(chicane)
+
+    #     # Close the remaining arc
+    #     for i in range(85, 100):
+    #         a = 2 * math.pi * i / 100
+    #         points.append((cx + radius * math.cos(a), cy + radius * math.sin(a)))
+
+    #     return points
+
     def draw(self, surface):
-        outer_radius = self.radius + self.width // 2
-        inner_radius = self.radius - self.width // 2
-        
-        # Track design
-        pygame.draw.circle(surface, TRACK_COLOR, (self.center_x, self.center_y), outer_radius)
-        
-        # Inner circle
-        pygame.draw.circle(surface, (30, 100, 30), (self.center_x, self.center_y), inner_radius)
-        
-        # Track borders
-        pygame.draw.circle(surface, TRACK_BORDER_COLOR, (self.center_x, self.center_y), outer_radius, 2)
-        pygame.draw.circle(surface, TRACK_BORDER_COLOR, (self.center_x, self.center_y), inner_radius, 2)
-
-        # Centerline
+        if len(self.centerline) > 1:
+            pygame.draw.lines(surface, TRACK_COLOR, True, self.centerline, self.width)
+            pygame.draw.lines(surface, TRACK_BORDER_COLOR, True, self.centerline, 2)
         pygame.draw.lines(surface, (255, 255, 0), True, self.centerline, 1)
-
-
-        # === Dynamic Checkered Flag at Start/Finish ===
-        # if len(self.centerline) > 1:
-        #     start = self.centerline[0]
-        #     next_pt = self.centerline[1]
-
-        #     # Tangent vector (direction of track)
-        #     dx = next_pt[0] - start[0]
-        #     dy = next_pt[1] - start[1]
-            
-        #     # Perpendicular vector (across the track)
-        #     length = max(1e-6, math.hypot(dx, dy))
-        #     perp_x = -dy / length
-        #     perp_y = dx / length
-
-        #     # Simpler version: just a perpendicular line
-        #     mid = self.centerline[0]
-        #     perp_end_x = mid[0] + perp_x * 40
-        #     perp_end_y = mid[1] + perp_y * 40
-        #     pygame.draw.line(surface, (255, 255, 255), 
-        #                     (mid[0] - perp_x * 40, mid[1] - perp_y * 40),
-        #                     (perp_end_x, perp_end_y), 4)
-        #     # Flag dimensions
-        #     flag_half_width = 30  # half of total width across track
-        #     flag_height = 40      # along track direction (small)
-
-        #     # Build 4 corners of the flag quad
-        #     corners = [
-        #         (start[0] + perp_x * -flag_half_width, start[1] + perp_y * -flag_half_width),
-        #         (start[0] + perp_x * flag_half_width, start[1] + perp_y * flag_half_width),
-        #         (start[0] + perp_x * flag_half_width + dx/length * flag_height, 
-        #         start[1] + perp_y * flag_half_width + dy/length * flag_height),
-        #         (start[0] + perp_x * -flag_half_width + dx/length * flag_height, 
-        #         start[1] + perp_y * -flag_half_width + dy/length * flag_height)
-        #     ]
-
-        #     # Draw checkered pattern (alternating black/white rectangles)
-        #     num_stripes = 8
-        #     for i in range(num_stripes):
-        #         color = (255, 255, 255) if i % 2 == 0 else (0, 0, 0)
-        #         # Interpolate between left and right edges
-        #         frac1 = i / num_stripes
-        #         frac2 = (i + 1) / num_stripes
-
-        #         x1 = corners[0][0] + (corners[1][0] - corners[0][0]) * frac1
-        #         y1 = corners[0][1] + (corners[1][1] - corners[0][1]) * frac1
-        #         x2 = corners[0][0] + (corners[1][0] - corners[0][0]) * frac2
-        #         y2 = corners[0][1] + (corners[1][1] - corners[0][1]) * frac2
-        #         x3 = corners[3][0] + (corners[2][0] - corners[3][0]) * frac2
-        #         y3 = corners[3][1] + (corners[2][1] - corners[3][1]) * frac2
-        #         x4 = corners[3][0] + (corners[2][0] - corners[3][0]) * frac1
-        #         y4 = corners[3][1] + (corners[2][1] - corners[3][1]) * frac1
-
-        #         pygame.draw.polygon(surface, color, [(x1, y1), (x2, y2), (x3, y3), (x4, y4)])
-
-        #     # Optional: "START" label (rotated)
-        #     font = pygame.font.SysFont(None, 20)
-        #     text = font.render("START", True, (255, 255, 0))
-        #     text = pygame.transform.rotate(text, -math.degrees(math.atan2(dy, dx)))
-        #     text_rect = text.get_rect(center=(start[0], start[1] - 30))
-        #     surface.blit(text, text_rect)
-
-        

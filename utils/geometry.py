@@ -41,3 +41,21 @@ def compute_curvature(p0, p1, p2):
     # Normalize: max curvature when angle = π (U-turn), min when 0 (straight)
     # Map [0, π] → [0, 1]
     return angle / math.pi
+
+def get_track_heading(centerline, index):
+    """Return the forward angle (radians) at a point on the centerline."""
+    n = len(centerline)
+    next_idx = (index + 1) % n
+    dx = centerline[next_idx][0] - centerline[index][0]
+    dy = centerline[next_idx][1] - centerline[index][1]
+    return math.atan2(dy, dx)
+
+def get_future_heading(centerline, current_index, look_ahead=30):
+    """Return the ideal heading (radians) toward a point ahead on the track."""
+    n = len(centerline)
+    future_index = (current_index + look_ahead) % n
+    curr = centerline[current_index]
+    future = centerline[future_index]
+    dx = future[0] - curr[0]
+    dy = future[1] - curr[1]
+    return math.atan2(dy, dx)

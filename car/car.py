@@ -1,4 +1,3 @@
-# car/car.py
 import math
 import pygame
 
@@ -18,7 +17,12 @@ class Car:
         self.max_speed = 8.0
         self.acceleration_rate = 0.3
         self.brake_rate = 0.4
-        self.turn_rate = 0.08
+        self.turn_rate = 0.15
+
+        # Lap counting
+        self.last_closest_index = 0
+        self.lap_count = 0
+        self.lap_complete = False
         
         # Car design
         self.color = color
@@ -77,6 +81,23 @@ class Car:
             self.brake()
         else:
             self.maintain()  # includes mild friction
+
+    def update_lap_progress(self, track):
+        if self.lap_complete or self.lap_count >= 5:
+            return
+
+        car_pos = (self.x, self.y)
+        _, nearest_idx = closest_point_on_track(car_pos, track.centerline)
+        
+        # Detect if we crossed the start/finish line (index 0)
+        # by checking if we went from high index → low index
+        if self.last_closest_index > len(track.centerline) * 0.9 and nearest_idx < 10:
+            self.lap_count += 1
+            print(f"Car completed lap {self.lap_count}")
+            if self.lap_count >= 5:
+                self.lap_complete = True
+
+        self.last_closest_index = nearest_idx
 
     def draw(self, surface):
         """Draw the car as a rotated rectangle."""
